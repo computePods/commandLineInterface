@@ -1,0 +1,21 @@
+# This is a simple example of a yaml based cpcli command
+
+# To be recognised as a cpcli command a yaml file MUST contain:
+# - 'longHelp'
+# - 'shortHelp'
+
+# If 'name' is not provided then the yaml file's name (less the '.yaml'
+# extension) will be used instead.
+
+# All other parameters are optional.
+
+# The resulting cpcli comman *will* have direct access to the contents of
+# this yaml file as a dictionary.
+
+name : test
+longHelp : This is an example test command defined using a YAML file
+shortHelp : Show test yaml contents
+epilogHelp : This is the test command's epilog help.
+extraData :
+  a : some additional data
+  b : some more data

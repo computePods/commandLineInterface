@@ -1,0 +1,28 @@
+[project]
+name = "ComputePodCommandLineInterface"
+version = "0.0.1"
+description = "A simple command line interface to interact with a federation of ComputePods."
+authors = [
+    {name = "Stephen Gaito", email = "stephen@perceptisys.co.uk"},
+]
+dependencies = [
+    "click",
+    "pyyaml~=5.4",
+]
+requires-python = ">=3.9"
+dynamic = ["classifiers"]
+license = {text = "Apache-2.0"}
+
+[project.urls]
+homepage = "https://github.com/computePods/commandLineInterface"
+
+[project.scripts]
+cpcli = "cpcli:cli"
+
+[project.optional-dependencies]
+[build-system]
+requires = ["pdm-pep517"]
+build-backend = "pdm.pep517.api"
+
+[tool]
+[tool.pdm]
