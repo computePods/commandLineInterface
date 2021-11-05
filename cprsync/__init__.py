@@ -15,6 +15,7 @@ import sys
 #   the path to the user's MajorDomo server
 #
 defaultSocketPath = '~/.local/cpmd/server.socket'
+defaultLogPath    = '/tmp/cprsync.log'
 
 # Turn off tracebacks so that we DO NOT tell any end user about this code
 #
@@ -54,6 +55,9 @@ def ctl() :
   parser.add_argument("-s", "--socket", type=str,
     help=f"a path to the user's MajorDomo server [default: {defaultSocketPath}]"
   )
+  parser.add_argument("-l", "--log", type=str,
+    help=f"a path to the cprsync's log file [default: {defaultLogPath}]"
+  )
   args = parser.parse_args()
 
   # normalise the command line arguments
@@ -62,6 +66,10 @@ def ctl() :
   if args.socket :
     socketPath = args.socket
   socketPath = os.path.abspath(os.path.expanduser(socketPath))
+  logFilePath = defaultLogPath
+  if args.log :
+    logFilePath = args.log
+  logFilePath = os.path.abspath(os.path.expanduser(logFilePath))
 
   # Get the original command
   #
@@ -104,7 +112,7 @@ def ctl() :
 
   # Log this result
   #
-  with open("/tmp/cprsync.log", 'a') as logFile :
+  with open(logFilePath, 'a') as logFile :
     logFile.write("---------------------------------------------------------\n")
     logFile.write("time now: [{}]\n\n".format(datetime.datetime.now()))
     logFile.write("original ssh command: \n  [{}]\n\n".format(origCmd))

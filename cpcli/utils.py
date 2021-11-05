@@ -13,7 +13,7 @@ from cpcli.httpUnixDomainClient import HTTPUnixDomainConnection
 
 defaultConfig = {
   'socketPath'  : '~/.local/cpmd/server.socket',
-  'commandsDir' : [ 'commands' ]
+  'commandsDirs' : [ 'cpcli/commands' ]
 }
 
 config = { }
@@ -38,8 +38,15 @@ def loadConfiguration() :
     else :
       break
 
+  testerIndex = -1
+  if '-t'      in sys.argv : testerIndex = sys.argv.index('-t')
+  if '-tester' in sys.argv : testerIndex = sys.argv.index('-tester')
+  if -1 < testerIndex :
+    del sys.argv[testerIndex:testerIndex+1]
+    del defaultConfig['commandsDirs'][0]
+
   configIndex = -1
-  if '-c' in sys.argv       : configIndex = sys.argv.index('-c')
+  if '-c'       in sys.argv : configIndex = sys.argv.index('-c')
   if '--config' in sys.argv : configIndex = sys.argv.index('--config')
   configPath = './cpcli.conf'
   if -1 < configIndex :
@@ -60,6 +67,18 @@ def loadConfiguration() :
     os.path.expanduser(config['socketPath'])
   )
   config['verbosity']  = verbosity
+
+  # if we are in tester mode... look for a test command...
+  # if there is not test command ... add the runTests command ...
+  #
+  if -1 < testerIndex :
+    numArguments = 0
+    for anArg in sys.argv :
+      if not anArg.startswith('-') :
+        numArguments = numArguments + 1
+    if numArguments < 2 :
+      sys.argv.append('runTests')
+
   if 0 < verbosity :
     print("--------------------------------------------------------------")
     print(yaml.dump(config))
@@ -117,12 +136,12 @@ def loadYamlCommandsIn(aCommandDir, theCli) :
 
 def importCommands(cli) :
   """Import or load all python or yaml based click commands found in any
-  of the commandDirs directories."""
+  of the commandsDirs directories."""
 
-  commandDirs = []
-  if 'commandDirs' in config : commandDirs = config['commandDirs']
-  commandDirs.insert(0, 'cpcli/commands')
-  for aCommandDir in commandDirs :
+  commandsDirs = []
+  if 'commandsDirs' in config : commandsDirs = config['commandsDirs']
+  #commandsDirs.insert(0, 'cpcli/commands')
+  for aCommandDir in commandsDirs :
     pkgPath = aCommandDir.replace('/','.')
     if aCommandDir.startswith('cpcli') :
       aCommandDir = os.path.join(os.path.dirname(__file__), aCommandDir.replace('cpcli/', ''))

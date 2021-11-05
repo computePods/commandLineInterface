@@ -17,7 +17,7 @@ license = {text = "Apache-2.0"}
 homepage = "https://github.com/computePods/commandLineInterface"
 
 [project.scripts]
-cpcli = "cpcli:cli"
+cpcli      = "cpcli:cli"
 cprsyncctl = "cprsync:ctl"
 
 

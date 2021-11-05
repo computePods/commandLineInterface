@@ -10,8 +10,16 @@ from cpcli.utils import loadConfiguration, importCommands
 config = loadConfiguration()
 
 @click.group()
-def cli() :
+@click.option('-c', '--config',
+  help="path to an additional configuration file [default: ./cpcli.conf]"
+)
+@click.option('-t', '--tester', is_flag=True,
+  help="run tests by ignoring the standard commands [default: no testing]"
+)
+@click.option('-v', '--verobse', count=True,
+  help="increase the verbosity [default: 0]"
+)
+def cli(verbose, config) :
   pass
 
 importCommands(cli)
-
