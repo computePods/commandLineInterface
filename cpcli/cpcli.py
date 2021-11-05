@@ -13,5 +13,5 @@ config = loadConfiguration()
 def cli() :
   pass
 
-importCommands(config, cli)
+importCommands(cli)
 

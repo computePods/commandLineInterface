@@ -18,6 +18,8 @@ homepage = "https://github.com/computePods/commandLineInterface"
 
 [project.scripts]
 cpcli = "cpcli:cli"
+cprsyncctl = "cprsync:ctl"
+
 
 [project.optional-dependencies]
 [build-system]

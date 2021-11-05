@@ -3,20 +3,28 @@
 import click
 import inspect
 import importlib
+import json
 import os
 import pkgutil
 import sys
 import yaml
 
+from cpcli.httpUnixDomainClient import HTTPUnixDomainConnection
+
 defaultConfig = {
+  'socketPath'  : '~/.local/cpmd/server.socket',
   'commandsDir' : [ 'commands' ]
 }
+
+config = { }
 
 def loadConfiguration() :
   """Prescan the command line arguments for configuration and verbose
   switches. Load any specified yaml configuration files and turn on
   verbose mode if requested. We do this *before* the click argument
   processing takes over."""
+
+  global config
 
   verbosity = 0
   while True :
@@ -44,18 +52,21 @@ def loadConfiguration() :
       config = yaml.safe_load(configFile.read())
     if 0 < verbosity : print(f"Loaded configuration from [{configPath}]")
   except FileNotFoundError :
-    print(f"Could not load configuration from [{configPath}]")
+    if 0 < verbosity : print(f"Could not load configuration from [{configPath}]")
   except Exception as err :
     print(f"Could not load configuration from [{configPath}]")
     print(repr(err))
-  config['verbosity'] = verbosity
+  config['socketPath'] = os.path.abspath(
+    os.path.expanduser(config['socketPath'])
+  )
+  config['verbosity']  = verbosity
   if 0 < verbosity :
     print("--------------------------------------------------------------")
     print(yaml.dump(config))
     print("--------------------------------------------------------------")
   return config
 
-def loadPythonCommandsIn(aCommandDir, aPkgPath, theCli, config) :
+def loadPythonCommandsIn(aCommandDir, aPkgPath, theCli) :
   """Load/import all python based click commands found in the aCommandDir
   directory. """
 
@@ -68,7 +79,7 @@ def loadPythonCommandsIn(aCommandDir, aPkgPath, theCli, config) :
         theCli.add_command(anObj)
 
 
-def loadYamlCommandsIn(aCommandDir, theCli, config) :
+def loadYamlCommandsIn(aCommandDir, theCli) :
   """Load all yaml based click command files found in the aCommandDir
   directory. """
 
@@ -104,7 +115,7 @@ def loadYamlCommandsIn(aCommandDir, theCli, config) :
           print(yaml.dump(yamlCmd))
           print("--------------------------------------------------------")
 
-def importCommands(config, cli) :
+def importCommands(cli) :
   """Import or load all python or yaml based click commands found in any
   of the commandDirs directories."""
 
@@ -119,5 +130,17 @@ def importCommands(config, cli) :
       currentWD = os.path.abspath(os.getcwd())
       if currentWD not in sys.path :
         sys.path.insert(0, currentWD)
-    loadPythonCommandsIn(aCommandDir, pkgPath, cli, config)
-    loadYamlCommandsIn(aCommandDir, cli, config)
+    loadPythonCommandsIn(aCommandDir, pkgPath, cli)
+    loadYamlCommandsIn(aCommandDir, cli)
+
+def getDataFromMajorDomo(method, url) :
+  result = None
+  try :
+    http = HTTPUnixDomainConnection(config['socketPath'])
+    http.request(method, url)
+    result = json.loads(http.getresponse().read())
+  except Exception as err :
+    sys.stderr.write("\nERROR: Could not connect to a MajorDomo at [{}]\n".format(config['socketPath']))
+    sys.stderr.write("  {}\n".format(repr(err)))
+
+  return result
