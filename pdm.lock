@@ -1,4 +1,14 @@
 [[package]]
+name = "asyncinotify"
+version = "2.0.2"
+summary = "A simple optionally-async python inotify library, focused on simplicity of use and operation, and leveraging modern Python features"
+
+[[package]]
+name = "asyncio-nats-client"
+version = "0.11.4"
+summary = "NATS client for Python Asyncio"
+
+[[package]]
 name = "click"
 version = "8.0.3"
 requires_python = ">=3.6"
@@ -14,6 +24,42 @@ requires_python = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
 summary = "Cross-platform colored terminal text."
 
 [[package]]
+name = "ComputePodInterfaces"
+version = "0.0.1"
+requires_python = ">=3.9"
+git = "https://github.com/computePods/interfaces.git"
+revision = "3a15cc2dec1b1c99ad2c814ce523dc35c0e92451"
+summary = "The HTTP and NATS interfaces for the ComputePods tools."
+
+[[package]]
+name = "ComputePodPythonUtils"
+version = "0.0.1"
+requires_python = ">=3.9"
+git = "https://github.com/computePods/pythonUtils.git"
+revision = "2693a484ff0d828614911cfce80aac0c3e13b6b5"
+summary = "A collection of Python utilities required by many of the ComputePods tools."
+dependencies = [
+    "asyncinotify~=2.0",
+    "asyncio-nats-client~=0.11",
+    "pyyaml~=5.4",
+]
+
+[[package]]
+name = "deepdiff"
+version = "5.6.0"
+requires_python = ">=3.6"
+summary = "Deep Difference and Search of any Python object/data."
+dependencies = [
+    "ordered-set==4.0.2",
+]
+
+[[package]]
+name = "ordered-set"
+version = "4.0.2"
+requires_python = ">=3.5"
+summary = "A set that remembers its order, and allows looking up its items by their index in that order."
+
+[[package]]
 name = "pyyaml"
 version = "5.4.1"
 requires_python = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
@@ -21,9 +67,16 @@ summary = "YAML parser and emitter for Python"
 
 [metadata]
 lock_version = "3"
-content_hash = "sha256:e95bddd2cef5403a378e6b758f4a01b22e7d813e8a539ec2c2a65cbab342a7ef"
+content_hash = "sha256:7d99f8ba9ad8922570f4287e30594a195ed2dc4ac0b93a29ce381d11209e386f"
 
 [metadata.files]
+"asyncinotify 2.0.2" = [
+    {file = "asyncinotify-2.0.2-py3-none-any.whl", hash = "sha256:26fa85d282df0066ab423cd96754d7ea07e6013d8a69a51e573303dbd0d2dff6"},
+    {file = "asyncinotify-2.0.2.tar.gz", hash = "sha256:867cc056d88fc07aa8b3d1dc5b9c3c911cdd6130a4df5f67beb1fdecfd37b164"},
+]
+"asyncio-nats-client 0.11.4" = [
+    {file = "asyncio-nats-client-0.11.4.tar.gz", hash = "sha256:ede58bda6560cf4206059799597be9be7ba28a479c4d118cf00bda6e4471bf2e"},
+]
 "click 8.0.3" = [
     {file = "click-8.0.3-py3-none-any.whl", hash = "sha256:353f466495adaeb40b6b5f592f9f91cb22372351c84caeb068132442a4518ef3"},
     {file = "click-8.0.3.tar.gz", hash = "sha256:410e932b050f5eed773c4cda94de75971c89cdb3155a72a0831139a79e5ecb5b"},
@@ -31,6 +84,13 @@ content_hash = "sha256:e95bddd2cef5403a378e6b758f4a01b22e7d813e8a539ec2c2a65cbab
 "colorama 0.4.4" = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
+]
+"deepdiff 5.6.0" = [
+    {file = "deepdiff-5.6.0-py3-none-any.whl", hash = "sha256:ef3410ca31e059a9d10edfdff552245829835b3ecd03212dc5b533d45a6c3f57"},
+    {file = "deepdiff-5.6.0.tar.gz", hash = "sha256:e3f1c3a375c7ea5ca69dba6f7920f9368658318ff1d8a496293c79481f48e649"},
+]
+"ordered-set 4.0.2" = [
+    {file = "ordered-set-4.0.2.tar.gz", hash = "sha256:ba93b2df055bca202116ec44b9bead3df33ea63a7d5827ff8e16738b97f33a95"},
 ]
 "pyyaml 5.4.1" = [
     {file = "PyYAML-5.4.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:3b2b1824fe7112845700f815ff6a489360226a5609b96ec2190a45e62a9fc922"},

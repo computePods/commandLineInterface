@@ -8,6 +8,9 @@ authors = [
 dependencies = [
     "click",
     "pyyaml~=5.4",
+    "ComputePodPythonUtils @ git+https://github.com/computePods/pythonUtils.git",
+    "ComputePodInterfaces  @ git+https://github.com/computePods/interfaces.git",
+    "deepdiff~=5.6",
 ]
 requires-python = ">=3.9"
 dynamic = ["classifiers"]

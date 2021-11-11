@@ -1,19 +1,23 @@
 """ A collection of utilities for cpcli."""
 
+import asyncio
 import click
+from deepdiff import DeepDiff
 import inspect
 import importlib
 import json
 import os
 import pkgutil
+from pprint import pprint
 import sys
 import yaml
 
+from cputils.natsClient import NatsClient
 from cpcli.httpUnixDomainClient import HTTPUnixDomainConnection
 
 defaultConfig = {
   'socketPath'  : '~/.local/cpmd/server.socket',
-  'commandsDirs' : [ 'cpcli/commands' ]
+  'commandsDirs' : [ ]
 }
 
 config = { }
@@ -43,12 +47,11 @@ def loadConfiguration() :
   if '-tester' in sys.argv : testerIndex = sys.argv.index('-tester')
   if -1 < testerIndex :
     del sys.argv[testerIndex:testerIndex+1]
-    del defaultConfig['commandsDirs'][0]
 
   configIndex = -1
   if '-c'       in sys.argv : configIndex = sys.argv.index('-c')
   if '--config' in sys.argv : configIndex = sys.argv.index('--config')
-  configPath = './cpcli.conf'
+  configPath = './cpcliConfig.yaml'
   if -1 < configIndex :
     del sys.argv[configIndex:configIndex+1]
     configPath = sys.argv[configIndex:configIndex+1][0]
@@ -63,15 +66,25 @@ def loadConfiguration() :
   except Exception as err :
     print(f"Could not load configuration from [{configPath}]")
     print(repr(err))
+
+  if 'socketPath' not in config :
+    config['socketPath'] = defaultConfig['socketPath']
   config['socketPath'] = os.path.abspath(
     os.path.expanduser(config['socketPath'])
   )
+
+  if 'commandsDirs' not in config :
+    config['commandsDirs'] = defaultConfig['commandsDirs']
+  if testerIndex < 0 :
+    config['commandsDirs'].insert(0,'cpcli/commands')
+
   config['verbosity']  = verbosity
 
   # if we are in tester mode... look for a test command...
   # if there is not test command ... add the runTests command ...
   #
   if -1 < testerIndex :
+    config['testerMode'] = True
     numArguments = 0
     for anArg in sys.argv :
       if not anArg.startswith('-') :
@@ -85,6 +98,8 @@ def loadConfiguration() :
     print("--------------------------------------------------------------")
   return config
 
+loadedTests = { }
+
 def loadPythonCommandsIn(aCommandDir, aPkgPath, theCli) :
   """Load/import all python based click commands found in the aCommandDir
   directory. """
@@ -92,11 +107,15 @@ def loadPythonCommandsIn(aCommandDir, aPkgPath, theCli) :
   for (_, module_name, _) in pkgutil.iter_modules([aCommandDir]) :
     theModule = importlib.import_module(aPkgPath+'.'+module_name)
     for (aName, anObj) in inspect.getmembers(theModule) :
+      if hasattr(anObj, 'cpTest') :
+        if 0 < config['verbosity'] :
+          print(f"adding test [{aName}] from {aCommandDir}")
+        loadedTests[aName] = anObj
+        continue
       if isinstance(anObj, click.Command) :
         if 0 < config['verbosity'] :
           print(f"adding click command [{aName}] from [{aPkgPath}.{module_name}]")
         theCli.add_command(anObj)
-
 
 def loadYamlCommandsIn(aCommandDir, theCli) :
   """Load all yaml based click command files found in the aCommandDir
@@ -112,17 +131,24 @@ def loadYamlCommandsIn(aCommandDir, theCli) :
         print(repr(err))
         yamlCmd = { }
 
+      if 'testName' in yamlCmd :
+        if 0 < config['verbosity'] :
+          print("adding test: [{}] from [{}]".format(
+            yamlCmd['testName'], aCommandDir
+          ))
+        loadedTests[yamlCmd['testName']] = yamlCmd
+        continue
+
       if ('longHelp' in yamlCmd) and ('shortHelp' in yamlCmd) :
         if 0 < config['verbosity'] :
           print(f"adding click command [{aFile}] in [{aCommandDir}]")
         if 'name' not in yamlCmd : yamlCmd['name'] = aFile.replace('.yaml', '')
-        epilogHelp = ""
-        if 'epilogHelp' in yamlCmd : epilogHelp = yamlCmd['epilogHelp']
+        if 'epilogHelp' not in yamlCmd : yamlCmd['epilogHelp'] = ""
         @theCli.command(
           yamlCmd['name'],
           help=yamlCmd['longHelp'],
           short_help=yamlCmd['shortHelp'],
-          epilog=epilogHelp
+          epilog=yamlCmd['epilogHelp']
         )
         def yamlCallback(*args, **kwargs) :
           print(f"Running {yamlCmd['name']}...")
@@ -133,6 +159,63 @@ def loadYamlCommandsIn(aCommandDir, theCli) :
           print("--------------------------------------------------------")
           print(yaml.dump(yamlCmd))
           print("--------------------------------------------------------")
+
+def runYamlTest(yamlTest) :
+  if 'request' not in yamlTest :
+    print("No request found in {}.... nothing to do!".format(
+      yamlTest['testName']))
+    return
+  request = yamlTest['request']
+  if request is not None and (
+    'method' not in request or 'url' not in request) :
+    print("No method or url specified in request for {}... nothing to do!".format(
+      yamlTest['testName']
+    ))
+    return
+  result = getDataFromMajorDomo(request['method'], request['url'])
+
+  if 'expected' in yamlTest :
+    diff   = DeepDiff(result, yamlTest['expected'])
+    print("---------------------------------------------------------------")
+    pprint(diff, indent=2)
+    print("---------------------------------------------------------------")
+
+def addRunTests(theCli) :
+  if 'testerMode' in config :
+    if 0 < config['verbosity'] :
+      print("Adding runTests command")
+    @theCli.command('runTests',
+      help="Run all known tests",
+      short_help="Run all known tests"
+    )
+    def runTestsCallback(*args, **kwargs) :
+      sys.argv.remove('runTests')
+      for aTestName, aTest in loadedTests.items() :
+        print("\n==========================================================")
+        print(f"running test: {aTestName}")
+        if callable(aTest)                      :
+          if asyncio.iscoroutinefunction(aTest) :
+            async def runATest() :
+              print("RUNNING A TEST")
+              natsClient = NatsClient("majorDomo", 10)
+              host = "127.0.0.1"
+              port = 4222
+              if 'natsServer' in config :
+                natsServerConfig = config['natsServer']
+                if 'host' in natsServerConfig : host = natsServerConfig['host']
+                if 'port' in natsServerConfig : port = natsServerConfig['port']
+              natsServerUrl = f"nats://{host}:{port}"
+              print(f"connecting to nats server: [{natsServerUrl}]")
+              await natsClient.connectToServers([ natsServerUrl ])
+              try:
+                await aTest(config, natsClient)
+              finally:
+                await natsClient.closeConnection()
+              print("RAN A TEST")
+            asyncio.run(runATest())
+          else                                  : aTest(config)
+        else                                    : runYamlTest(aTest)
+
 
 def importCommands(cli) :
   """Import or load all python or yaml based click commands found in any
@@ -151,12 +234,13 @@ def importCommands(cli) :
         sys.path.insert(0, currentWD)
     loadPythonCommandsIn(aCommandDir, pkgPath, cli)
     loadYamlCommandsIn(aCommandDir, cli)
+  addRunTests(cli)
 
 def getDataFromMajorDomo(method, url) :
   result = None
   try :
     http = HTTPUnixDomainConnection(config['socketPath'])
-    http.request(method, url)
+    http.request(method.upper(), url)
     result = json.loads(http.getresponse().read())
   except Exception as err :
     sys.stderr.write("\nERROR: Could not connect to a MajorDomo at [{}]\n".format(config['socketPath']))

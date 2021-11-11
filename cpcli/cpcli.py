@@ -16,10 +16,10 @@ config = loadConfiguration()
 @click.option('-t', '--tester', is_flag=True,
   help="run tests by ignoring the standard commands [default: no testing]"
 )
-@click.option('-v', '--verobse', count=True,
+@click.option('-v', '--verbose', count=True,
   help="increase the verbosity [default: 0]"
 )
-def cli(verbose, config) :
+def cli(verbose, tester, config) :
   pass
 
 importCommands(cli)
