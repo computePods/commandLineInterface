@@ -81,7 +81,7 @@ def loadConfiguration() :
   config['verbosity']  = verbosity
 
   # if we are in tester mode... look for a test command...
-  # if there is not test command ... add the runTests command ...
+  # if there is not test command ... add the runAllTests command ...
   #
   if -1 < testerIndex :
     config['testerMode'] = True
@@ -90,7 +90,7 @@ def loadConfiguration() :
       if not anArg.startswith('-') :
         numArguments = numArguments + 1
     if numArguments < 2 :
-      sys.argv.append('runTests')
+      sys.argv.append('runAllTests')
 
   if 0 < verbosity :
     print("--------------------------------------------------------------")
@@ -180,42 +180,71 @@ def runYamlTest(yamlTest) :
     pprint(diff, indent=2)
     print("---------------------------------------------------------------")
 
-def addRunTests(theCli) :
+def runASingleTest(testName, testMethod) :
+  print("\n==========================================================")
+  print(f"running test: {testName}")
+  if callable(testMethod)                      :
+    if asyncio.iscoroutinefunction(testMethod) :
+      async def runATest() :
+        print("RUNNING A TEST")
+        natsClient = NatsClient("majorDomo", 10)
+        host = "127.0.0.1"
+        port = 4222
+        if 'natsServer' in config :
+          natsServerConfig = config['natsServer']
+          if 'host' in natsServerConfig : host = natsServerConfig['host']
+          if 'port' in natsServerConfig : port = natsServerConfig['port']
+        natsServerUrl = f"nats://{host}:{port}"
+        print(f"connecting to nats server: [{natsServerUrl}]")
+        await natsClient.connectToServers([ natsServerUrl ])
+        try:
+          await testMethod(config, natsClient)
+        finally:
+          await natsClient.closeConnection()
+        print("RAN A TEST")
+      asyncio.run(runATest())
+    else                                  : testMethod(config)
+  else                                    : runYamlTest(testMethod)
+
+def addRunAllTests(theCli) :
   if 'testerMode' in config :
     if 0 < config['verbosity'] :
-      print("Adding runTests command")
-    @theCli.command('runTests',
+      print("Adding runAllTests command")
+    @theCli.command('runAllTests',
       help="Run all known tests",
       short_help="Run all known tests"
     )
-    def runTestsCallback(*args, **kwargs) :
-      sys.argv.remove('runTests')
+    def runAllTestsCallback(*args, **kwargs) :
+      sys.argv.remove('runAllTests')
       for aTestName, aTest in loadedTests.items() :
-        print("\n==========================================================")
-        print(f"running test: {aTestName}")
-        if callable(aTest)                      :
-          if asyncio.iscoroutinefunction(aTest) :
-            async def runATest() :
-              print("RUNNING A TEST")
-              natsClient = NatsClient("majorDomo", 10)
-              host = "127.0.0.1"
-              port = 4222
-              if 'natsServer' in config :
-                natsServerConfig = config['natsServer']
-                if 'host' in natsServerConfig : host = natsServerConfig['host']
-                if 'port' in natsServerConfig : port = natsServerConfig['port']
-              natsServerUrl = f"nats://{host}:{port}"
-              print(f"connecting to nats server: [{natsServerUrl}]")
-              await natsClient.connectToServers([ natsServerUrl ])
-              try:
-                await aTest(config, natsClient)
-              finally:
-                await natsClient.closeConnection()
-              print("RAN A TEST")
-            asyncio.run(runATest())
-          else                                  : aTest(config)
-        else                                    : runYamlTest(aTest)
+        runASingleTest(aTestName, aTest)
 
+def addRunTest(theCli) :
+  if 'testerMode' in config :
+    if 0 < config['verbosity'] :
+      print("Adding runTest command to run one test")
+    @theCli.command('runTest',
+      help="Run a single test",
+      short_help="Run a single test"
+    )
+    @click.argument('testName')
+    def runTestCallback(testname) :
+      if testname in loadedTests :
+        runASingleTest(testname, loadedTests[testname])
+      else :
+        print(f"test [{testname}] not found")
+
+def addListTests(theCli) :
+  if 'testerMode' in config :
+    if 0 < config['verbosity'] :
+      print("Adding list tests command")
+    @theCli.command('listTests',
+      help="List all known tests",
+      short_help="List all known tests"
+    )
+    def listTestsCallback(*args, **kwargs) :
+      for aTestName, aTest in loadedTests.items() :
+        print(aTestName)
 
 def importCommands(cli) :
   """Import or load all python or yaml based click commands found in any
@@ -234,7 +263,9 @@ def importCommands(cli) :
         sys.path.insert(0, currentWD)
     loadPythonCommandsIn(aCommandDir, pkgPath, cli)
     loadYamlCommandsIn(aCommandDir, cli)
-  addRunTests(cli)
+  addRunAllTests(cli)
+  addRunTest(cli)
+  addListTests(cli)
 
 def getDataFromMajorDomo(method, url) :
   result = None
