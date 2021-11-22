@@ -176,7 +176,8 @@ def disable(ctx) :
 async def asyncRsyncedFiles(config, fromPath, toPath) :
   rsync = RsyncFileTransporter(config)
 
-  if await rsync.rsyncedFiles(fromPath, toPath) :
+  success, stdout, stderr = await rsync.rsyncedFiles(fromPath, toPath)
+  if success :
     print(f"Rsynced files from {fromPath} to {toPath}")
   else :
     print(f"Could not rsync files from {fromPath} to {toPath}")
