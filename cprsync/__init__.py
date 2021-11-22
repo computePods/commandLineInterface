@@ -58,6 +58,9 @@ def ctl() :
   parser.add_argument("-l", "--log", type=str,
     help=f"a path to the cprsync's log file [default: {defaultLogPath}]"
   )
+  parser.add_argument("-d", "--dir", type=str,
+    help="a path to the base directory into/from which rsync is allowed [no default]"
+  )
   args = parser.parse_args()
 
   # normalise the command line arguments
@@ -92,15 +95,21 @@ def ctl() :
 
   # Get the allowed project paths from this user's MajorDomo
   #
-  majorDomoOK = socketPath
   projects = { }
-  try :
-    http = HTTPUnixDomainConnection(socketPath)
-    http.request('GET', '/projects')
-    result = http.getresponse()
-    projects = json.loads(result.read())
-  except Exception as err :
-    majorDomoOK = repr(err)
+  if args.dir :
+    majorDomoOK = args.dir
+    projects['allowedDir'] = os.path.abspath(
+      os.path.expanduser(args.dir)
+    )
+  else :
+    majorDomoOK = socketPath
+    try :
+      http = HTTPUnixDomainConnection(socketPath)
+      http.request('GET', '/projects')
+      result = http.getresponse()
+      projects = json.loads(result.read())
+    except Exception as err :
+      majorDomoOK = repr(err)
 
   # Check if this targetDir is an allowed project path
   #

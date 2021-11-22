@@ -106,16 +106,19 @@ def loadPythonCommandsIn(aCommandDir, aPkgPath, theCli) :
 
   for (_, module_name, _) in pkgutil.iter_modules([aCommandDir]) :
     theModule = importlib.import_module(aPkgPath+'.'+module_name)
-    for (aName, anObj) in inspect.getmembers(theModule) :
-      if hasattr(anObj, 'cpTest') :
-        if 0 < config['verbosity'] :
-          print(f"adding test [{aName}] from {aCommandDir}")
-        loadedTests[aName] = anObj
-        continue
-      if isinstance(anObj, click.Command) :
-        if 0 < config['verbosity'] :
-          print(f"adding click command [{aName}] from [{aPkgPath}.{module_name}]")
-        theCli.add_command(anObj)
+    if hasattr(theModule, 'registerCommands') :
+      theModule.registerCommands(theCli)
+    else :
+      for (aName, anObj) in inspect.getmembers(theModule) :
+        if hasattr(anObj, 'cpTest') :
+          if 0 < config['verbosity'] :
+            print(f"adding test [{aName}] from {aCommandDir}")
+          loadedTests[aName] = anObj
+          continue
+        if isinstance(anObj, click.Command) :
+          if 0 < config['verbosity'] :
+            print(f"adding click command [{aName}] from [{aPkgPath}.{module_name}]")
+          theCli.add_command(anObj)
 
 def loadYamlCommandsIn(aCommandDir, theCli) :
   """Load all yaml based click command files found in the aCommandDir

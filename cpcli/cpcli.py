@@ -9,7 +9,13 @@ from cpcli.utils import loadConfiguration, importCommands
 
 config = loadConfiguration()
 
-@click.group()
+contextSettings = dict(
+   obj={
+     'config' : config
+   }
+)
+
+@click.group(context_settings=contextSettings)
 @click.option('-c', '--config',
   help="path to an additional configuration file [default: ./cpcli.conf]"
 )

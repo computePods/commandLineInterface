@@ -1,4 +1,10 @@
 [[package]]
+name = "aiofiles"
+version = "0.7.0"
+requires_python = ">=3.6,<4.0"
+summary = "File support for asyncio."
+
+[[package]]
 name = "asyncinotify"
 version = "2.0.2"
 summary = "A simple optionally-async python inotify library, focused on simplicity of use and operation, and leveraging modern Python features"
@@ -28,7 +34,7 @@ name = "ComputePodInterfaces"
 version = "0.0.1"
 requires_python = ">=3.9"
 git = "https://github.com/computePods/interfaces.git"
-revision = "3a15cc2dec1b1c99ad2c814ce523dc35c0e92451"
+revision = "b07873e755308e040129eb30f7161faddee0df55"
 summary = "The HTTP and NATS interfaces for the ComputePods tools."
 
 [[package]]
@@ -36,9 +42,10 @@ name = "ComputePodPythonUtils"
 version = "0.0.1"
 requires_python = ">=3.9"
 git = "https://github.com/computePods/pythonUtils.git"
-revision = "2693a484ff0d828614911cfce80aac0c3e13b6b5"
+revision = "7ef9145dc1ad3b227b2bb2df2fa00129d0bbc542"
 summary = "A collection of Python utilities required by many of the ComputePods tools."
 dependencies = [
+    "aiofiles~=0.7",
     "asyncinotify~=2.0",
     "asyncio-nats-client~=0.11",
     "pyyaml~=5.4",
@@ -70,6 +77,10 @@ lock_version = "3"
 content_hash = "sha256:7d99f8ba9ad8922570f4287e30594a195ed2dc4ac0b93a29ce381d11209e386f"
 
 [metadata.files]
+"aiofiles 0.7.0" = [
+    {file = "aiofiles-0.7.0-py3-none-any.whl", hash = "sha256:c67a6823b5f23fcab0a2595a289cec7d8c863ffcb4322fb8cd6b90400aedfdbc"},
+    {file = "aiofiles-0.7.0.tar.gz", hash = "sha256:a1c4fc9b2ff81568c83e21392a82f344ea9d23da906e4f6a52662764545e19d4"},
+]
 "asyncinotify 2.0.2" = [
     {file = "asyncinotify-2.0.2-py3-none-any.whl", hash = "sha256:26fa85d282df0066ab423cd96754d7ea07e6013d8a69a51e573303dbd0d2dff6"},
     {file = "asyncinotify-2.0.2.tar.gz", hash = "sha256:867cc056d88fc07aa8b3d1dc5b9c3c911cdd6130a4df5f67beb1fdecfd37b164"},
