@@ -163,6 +163,28 @@ def loadYamlCommandsIn(aCommandDir, theCli) :
           print(yaml.dump(yamlCmd))
           print("--------------------------------------------------------")
 
+def runCommandWithNatsServer(commandMethod) :
+  if callable(commandMethod)                      :
+    if asyncio.iscoroutinefunction(commandMethod) :
+      async def runCommand() :
+        natsClient = NatsClient("majorDomo", 10)
+        host = "127.0.0.1"
+        port = 4222
+        if 'natsServer' in config :
+          natsServerConfig = config['natsServer']
+          if 'host' in natsServerConfig : host = natsServerConfig['host']
+          if 'port' in natsServerConfig : port = natsServerConfig['port']
+        natsServerUrl = f"nats://{host}:{port}"
+        print(f"connecting to nats server: [{natsServerUrl}]")
+        await natsClient.connectToServers([ natsServerUrl ])
+        try:
+          await commandMethod(config, natsClient)
+        finally:
+          await natsClient.closeConnection()
+      asyncio.run(runATest())
+    else : print("command MUST be an asyncio coroutine")
+  else : print("command MUST be an asyncio coroutine")
+
 def runYamlTest(yamlTest) :
   if 'request' not in yamlTest :
     print("No request found in {}.... nothing to do!".format(
