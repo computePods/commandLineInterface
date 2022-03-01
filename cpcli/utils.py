@@ -181,7 +181,7 @@ def runCommandWithNatsServer(commandMethod) :
           await commandMethod(config, natsClient)
         finally:
           await natsClient.closeConnection()
-      asyncio.run(runATest())
+      asyncio.run(runCommand())
     else : print("command MUST be an asyncio coroutine")
   else : print("command MUST be an asyncio coroutine")
 
