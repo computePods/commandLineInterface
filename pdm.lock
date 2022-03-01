@@ -10,11 +10,6 @@ version = "2.0.2"
 summary = "A simple optionally-async python inotify library, focused on simplicity of use and operation, and leveraging modern Python features"
 
 [[package]]
-name = "asyncio-nats-client"
-version = "0.11.5"
-summary = "NATS client for Python Asyncio"
-
-[[package]]
 name = "click"
 version = "8.0.4"
 requires_python = ">=3.6"
@@ -32,20 +27,22 @@ summary = "Cross-platform colored terminal text."
 [[package]]
 name = "computepodinterfaces"
 version = "0.0.1"
+requires_python = ">=3.9"
 git = "https://github.com/computePods/interfaces.git"
-revision = "b07873e755308e040129eb30f7161faddee0df55"
+revision = "e4c2d29367fb86b12a7a82fb419338d0859cc70c"
 summary = "The HTTP and NATS interfaces for the ComputePods tools."
 
 [[package]]
 name = "computepodpythonutils"
 version = "0.0.1"
+requires_python = ">=3.9"
 git = "https://github.com/computePods/pythonUtils.git"
-revision = "0669e1e42792a80ba1318152d341f43e7dccd663"
+revision = "03f6a34550d7b19931767f0d87e7c45f52d137b1"
 summary = "A collection of Python utilities required by many of the ComputePods tools."
 dependencies = [
     "aiofiles~=0.7",
     "asyncinotify~=2.0",
-    "asyncio-nats-client~=0.11",
+    "nats-py",
     "pyyaml~=5.4",
 ]
 
@@ -57,6 +54,11 @@ summary = "Deep Difference and Search of any Python object/data."
 dependencies = [
     "ordered-set==4.0.2",
 ]
+
+[[package]]
+name = "nats-py"
+version = "2.0.0"
+summary = "NATS client for Python"
 
 [[package]]
 name = "ordered-set"
@@ -83,9 +85,6 @@ content_hash = "sha256:2a641ffb842cf49737e3e19dba2134c981de42d5d3b26050fe940a414
     {file = "asyncinotify-2.0.2-py3-none-any.whl", hash = "sha256:26fa85d282df0066ab423cd96754d7ea07e6013d8a69a51e573303dbd0d2dff6"},
     {file = "asyncinotify-2.0.2.tar.gz", hash = "sha256:867cc056d88fc07aa8b3d1dc5b9c3c911cdd6130a4df5f67beb1fdecfd37b164"},
 ]
-"asyncio-nats-client 0.11.5" = [
-    {file = "asyncio-nats-client-0.11.5.tar.gz", hash = "sha256:c6a2855a63db68289bb270240670ff30514ba0082a8b4f759b8e9955ac84c575"},
-]
 "click 8.0.4" = [
     {file = "click-8.0.4-py3-none-any.whl", hash = "sha256:6a7a62563bbfabfda3a38f3023a1db4a35978c0abd76f6c9605ecd6554d6d9b1"},
     {file = "click-8.0.4.tar.gz", hash = "sha256:8458d7b1287c5fb128c90e23381cf99dcde74beaf6c7ff6384ce84d6fe090adb"},
@@ -97,6 +96,9 @@ content_hash = "sha256:2a641ffb842cf49737e3e19dba2134c981de42d5d3b26050fe940a414
 "deepdiff 5.7.0" = [
     {file = "deepdiff-5.7.0-py3-none-any.whl", hash = "sha256:1ffb38c3b5d9174eb2df95850c93aee55ec00e19396925036a2e680f725079e0"},
     {file = "deepdiff-5.7.0.tar.gz", hash = "sha256:838766484e323dcd9dec6955926a893a83767dc3f3f94542773e6aa096efe5d4"},
+]
+"nats-py 2.0.0" = [
+    {file = "nats-py-2.0.0.tar.gz", hash = "sha256:e983751199f38edad89eedc764d295f7359a2c0cc610d886e48e5a465b6a1ad1"},
 ]
 "ordered-set 4.0.2" = [
     {file = "ordered-set-4.0.2.tar.gz", hash = "sha256:ba93b2df055bca202116ec44b9bead3df33ea63a7d5827ff8e16738b97f33a95"},
