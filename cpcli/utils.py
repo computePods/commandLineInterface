@@ -301,11 +301,25 @@ def importCommands(cli) :
   addRunTest(cli)
   addListTests(cli)
 
-def getDataFromMajorDomo(method, url) :
+def getDataFromMajorDomo(url) :
+  method = 'GET'
   result = None
   try :
     http = HTTPUnixDomainConnection(config['socketPath'])
     http.request(method.upper(), url)
+    result = json.loads(http.getresponse().read())
+  except Exception as err :
+    sys.stderr.write("\nERROR: Could not connect to a MajorDomo at [{}]\n".format(config['socketPath']))
+    sys.stderr.write("  {}\n".format(repr(err)))
+
+  return result
+
+def postDataToMajorDomo(url, data) :
+  method = 'POST'
+  result = None
+  try :
+    http = HTTPUnixDomainConnection(config['socketPath'])
+    http.request(method.upper(), url, body=json.dumps(data))
     result = json.loads(http.getresponse().read())
   except Exception as err :
     sys.stderr.write("\nERROR: Could not connect to a MajorDomo at [{}]\n".format(config['socketPath']))

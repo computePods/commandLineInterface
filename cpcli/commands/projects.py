@@ -2,9 +2,10 @@
 # MajorDomo's projects interface.
 
 import click
+import os
 import yaml
 
-from cpcli.utils import getDataFromMajorDomo
+from cpcli.utils import getDataFromMajorDomo, postDataToMajorDomo
 
 @click.group(
   short_help="Manage MajorDomo projects.",
@@ -29,25 +30,39 @@ def registerCommands(theClie) :
 @click.pass_context
 def list(ctx) :
   print("Listing projects...")
-  data = getDataFromMajorDomo('GET', '/projects')
+  data = getDataFromMajorDomo('/projects')
   print("")
   print(yaml.dump(data))
   print("")
 
-#@projects.command(
-#    short_help="add a project.",
-#    help="Add a project"
-#)
-#@click.argument("projectDir")
-#@click.pass_context
-#def add(ctx, projectdir) :
-#  print("adding {}".format(projectdir))
+@projects.command(
+    short_help="add a project.",
+    help="Add a project"
+)
+@click.argument("projectName")
+@click.pass_context
+def add(ctx, projectname) :
+  projectName = projectname
+  projectDir = os.getcwd()
+  print("adding project [{}]".format(projectName))
+  print("projectDir [{}]".format(projectDir))
+  postDataToMajorDomo('/project/add', {
+    'projectName' : projectName,
+    'projectDir'  : projectDir
+  })
 
-#@projects.command(
-#    short_help="remove a project.",
-#    help="Remove a project"
-#)
-#@click.argument("projectDir")
-#@click.pass_context
-#def remove(ctx, projectdir) :
-#  print("remove {}".format(projectdir))
+@projects.command(
+    short_help="remove a project.",
+    help="Remove a project"
+)
+@click.argument("projectName")
+@click.pass_context
+def remove(ctx, projectname) :
+  projectName = projectname
+  projectDir  = os.getcwd()
+  print("removing project [{}]".format(projectName))
+  print("projectDir [{}]".format(projectDir))
+  postDataToMajorDomo('/project/remove', {
+    'projectName' : projectName,
+    'projectDir'  : projectDir
+  })
