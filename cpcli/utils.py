@@ -51,11 +51,16 @@ def loadConfiguration() :
   configIndex = -1
   if '-c'       in sys.argv : configIndex = sys.argv.index('-c')
   if '--config' in sys.argv : configIndex = sys.argv.index('--config')
-  configPath = './cpcliConfig.yaml'
+  configPath = '~/.config/computePods/cpcliConfig.yaml'
+  localConfigPath = './cpcliConfig.yaml'
+  if os.path.exists(localConfigPath) :
+    configPath = localConfigPath
   if -1 < configIndex :
     del sys.argv[configIndex:configIndex+1]
     configPath = sys.argv[configIndex:configIndex+1][0]
     del sys.argv[configIndex:configIndex+1]
+  configPath = os.path.expanduser(configPath)
+
   config = defaultConfig
   try :
     with open(configPath) as configFile :
@@ -277,15 +282,19 @@ def importCommands(cli) :
 
   commandsDirs = []
   if 'commandsDirs' in config : commandsDirs = config['commandsDirs']
-  #commandsDirs.insert(0, 'cpcli/commands')
   for aCommandDir in commandsDirs :
     pkgPath = aCommandDir.replace('/','.')
     if aCommandDir.startswith('cpcli') :
       aCommandDir = os.path.join(os.path.dirname(__file__), aCommandDir.replace('cpcli/', ''))
-    if not aCommandDir.startswith('/') :
-      currentWD = os.path.abspath(os.getcwd())
-      if currentWD not in sys.path :
-        sys.path.insert(0, currentWD)
+    else :
+      aSysPath = os.path.abspath(os.getcwd())
+      if aCommandDir.startswith('~') :
+        aCommandDir = os.path.expanduser(aCommandDir)
+      if aCommandDir.startswith('/') :
+        pkgPath = os.path.basename(aCommandDir)
+        aSysPath = os.path.dirname(aCommandDir)
+      if aSysPath not in sys.path :
+        sys.path.insert(0, aSysPath)
     loadPythonCommandsIn(aCommandDir, pkgPath, cli)
     loadYamlCommandsIn(aCommandDir, cli)
   addRunAllTests(cli)
