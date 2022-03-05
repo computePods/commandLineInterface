@@ -2,6 +2,8 @@
 
 import asyncio
 import click
+import os
+import platform
 import yaml
 
 from cputils.rsyncFileTransporter import RsyncFileTransporter
@@ -136,6 +138,31 @@ async def asyncEnableKey(config) :
     else :
       print("Could not add the ssh key for this ComputePod to your ssh authorized_keys file")
 
+  if 'hostPublicKeyFile' in config['config'] :
+    hostPublicKeyFile = os.path.abspath(os.path.expanduser(
+      config['config']['hostPublicKeyFile']
+    ))
+    hostPublicKey = None
+    if os.path.exists(hostPublicKeyFile) \
+      and os.access(hostPublicKeyFile, os.R_OK) :
+      with open(hostPublicKeyFile, 'r') as hpkf :
+        hostPublicKey = hpkf.read().strip()
+    result = "Could not read"
+    if hostPublicKey :
+      result = postDataToMajorDomo('/security/addHostPublicKey', {
+        'host'      : platform.node(),
+        'publicKey' : hostPublicKey
+      })
+      if result is None :
+        result = "Could not contact majorDomo with"
+      else :
+        result = result['result']
+    print(f"{result} this host's public key")
+  else :
+    print("\nWARNING: Could not determine this host's public key")
+    print("Please specify the location of the ssh host public key")
+    print("in the configuration file.")
+
 @ssh.command(
   short_help="Enable the ssh key for this ComputePod for this user.",
   help="Enable the ssh key for this ComputePod for this user.")
@@ -161,6 +188,14 @@ async def asyncDisableKey(config) :
     print("Ssh key for this ComputePod has been removed from your ssh authorized_keys file")
   else :
     print("Could not remove the ssh key for this ComputePod from your ssh authorized_keys file")
+  result = postDataToMajorDomo('/security/removeHostPublicKey', {
+    'host' : platform.node()
+  })
+  if result is None :
+    result = "Could not contact majorDomo with"
+  else :
+    result = result['result']
+  print(f"{result} this host's public key")
 
 @ssh.command(
   short_help="Disable the ssh key for this ComputePod for this user.",
