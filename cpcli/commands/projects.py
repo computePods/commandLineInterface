@@ -39,26 +39,32 @@ def list(ctx) :
     short_help="add a project.",
     help="Add a project"
 )
-@click.option('-p', '--projectName', multiple=True,
-  help="a project name to be added (default: add all found)"
+@click.option('-p', '--projectNames', multiple=True,
+  help="one or more project names to be added (default: add all found)"
+)
+@click.option('-d', '--projectDir', default=os.getcwd(),
+  help="a directory containing a project description yaml file (.pyaml)"
 )
 @click.pass_context
-def add(ctx, projectname) :
-  aProjectDir = os.getcwd()
+def add(ctx, projectnames, projectdir) :
+
+  if not os.path.isdir(projectdir) :
+    print("Project directory not found:\n  {}".format(projectdir))
+    return
 
   projects = {}
   cputils.yamlLoader.loadYamlFrom(
-    projects, aProjectDir, [ '.PYML'],
+    projects, projectdir, [ '.PYML'],
   )
 
   projectsFound = False
   if 'projects' in projects :
     for aProjectName, aProjectDesc in projects['projects'].items() :
-      if projectname and aProjectName not in projectname : continue
+      if projectnames and aProjectName not in projectnames : continue
       projectsFound = True
       result = postDataToMajorDomo('/project/add', {
         'projectName' : aProjectName,
-        'projectDir'  : aProjectDir,
+        'projectDir'  : projectdir,
         'projectDesc' : aProjectDesc
       })
 
@@ -66,7 +72,9 @@ def add(ctx, projectname) :
       print(yaml.dump(result))
       print("---------------------------------------------------------")
   if not projectsFound :
-    print("None of the listed projects have descriptions in this directory.")
+    print("No projects found in the directory.")
+    if projectnames : print("  Projects:  [{}]".format(projectnames))
+    print("  Directory: {}".format(projectdir))
 
 @projects.command(
     short_help="update an existing project.",
