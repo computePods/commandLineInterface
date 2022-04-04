@@ -141,3 +141,16 @@ def remove(ctx, projectname) :
       print("---------------------------------------------------------")
   if not projectsFound :
     print("None of the listed projects have descriptions in this directory.")
+
+@projects.command(
+    short_help="list targets for an existing project.",
+    help="List targets for an existing project"
+)
+@click.argument('projectName')
+@click.pass_context
+def targets(ctx, projectname) :
+  print("Listing targets...")
+  data = getDataFromMajorDomo(f'/project/targets/{projectname}')
+  print("")
+  print(yaml.dump(data))
+  print("")
