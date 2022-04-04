@@ -167,3 +167,17 @@ def definition(ctx, projectname) :
   print("")
   print(yaml.dump(data))
   print("")
+
+@projects.command(
+    short_help="build definition for the target of an existing project.",
+    help="Build definition for the target of an existing project"
+)
+@click.argument('projectName')
+@click.argument('target')
+@click.pass_context
+def build(ctx, projectname, target) :
+  print(f"Target build definition... ({projectname}, {target})")
+  data = getDataFromMajorDomo(f'/project/buildTarget/{projectname}/{target}')
+  print("")
+  print(yaml.dump(data))
+  print("")
