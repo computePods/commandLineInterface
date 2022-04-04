@@ -154,3 +154,16 @@ def targets(ctx, projectname) :
   print("")
   print(yaml.dump(data))
   print("")
+
+@projects.command(
+    short_help="return the definition for an existing project.",
+    help="Return the definition for an existing project"
+)
+@click.argument('projectName')
+@click.pass_context
+def definition(ctx, projectname) :
+  print("Project definition...")
+  data = getDataFromMajorDomo(f'/project/definition/{projectname}')
+  print("")
+  print(yaml.dump(data))
+  print("")
