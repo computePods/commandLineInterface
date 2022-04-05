@@ -168,7 +168,7 @@ def loadYamlCommandsIn(aCommandDir, theCli) :
           print(yaml.dump(yamlCmd))
           print("--------------------------------------------------------")
 
-def runCommandWithNatsServer(commandMethod) :
+def runCommandWithNatsServer(data, commandMethod) :
   if callable(commandMethod)                      :
     if asyncio.iscoroutinefunction(commandMethod) :
       async def runCommand() :
@@ -183,7 +183,7 @@ def runCommandWithNatsServer(commandMethod) :
         print(f"connecting to nats server: [{natsServerUrl}]")
         await natsClient.connectToServers([ natsServerUrl ])
         try:
-          await commandMethod(config, natsClient)
+          await commandMethod(data, config, natsClient)
         finally:
           await natsClient.closeConnection()
       asyncio.run(runCommand())
