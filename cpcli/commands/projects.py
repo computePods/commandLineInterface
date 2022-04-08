@@ -3,6 +3,7 @@
 
 import click
 import os
+import platform
 import yaml
 
 import cputils.yamlLoader
@@ -63,6 +64,8 @@ def add(ctx, projectnames, projectdir) :
       if projectnames and aProjectName not in projectnames : continue
       projectsFound = True
       result = postDataToMajorDomo('/project/add', {
+        'rsyncHost'   : platform.node(),
+        'rsyncUser'   : os.getlogin(),
         'projectName' : aProjectName,
         'projectDir'  : projectdir,
         'projectDesc' : aProjectDesc
@@ -98,6 +101,8 @@ def update(ctx, projectname) :
       if projectname and aProjectName not in projectname : continue
       projectsFound = True
       result = postDataToMajorDomo('/project/update', {
+        'rsyncHost'   : platform.node(),
+        'rsyncUser'   : os.getlogin(),
         'projectName' : aProjectName,
         'projectDir'  : aProjectDir,
         'projectDesc' : aProjectDesc
@@ -131,6 +136,8 @@ def remove(ctx, projectname) :
       if projectname and aProjectName not in projectname : continue
       projectsFound = True
       result = postDataToMajorDomo('/project/remove', {
+        'rsyncHost'   : platform.node(),
+        'rsyncUser'   : os.getlogin(),
         'projectName' : aProjectName,
         'projectDir'  : aProjectDir,
         'projectDesc' : aProjectDesc
