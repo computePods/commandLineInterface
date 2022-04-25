@@ -6,10 +6,13 @@ from deepdiff import DeepDiff
 import inspect
 import importlib
 import json
+import logging
 import os
 import pkgutil
 from pprint import pprint
+import signal
 import sys
+import traceback
 import yaml
 
 from cputils.natsClient import NatsClient
@@ -97,6 +100,13 @@ def loadConfiguration() :
     if numArguments < 2 :
       sys.argv.append('runAllTests')
 
+  if verbosity == 0 :
+    logging.basicConfig(level=logging.WARNING)
+  elif verbosity == 1:
+    logging.basicConfig(level=logging.INFO)
+  else:
+    logging.basicConfig(level=logging.DEBUG)
+
   if 0 < verbosity :
     print("--------------------------------------------------------------")
     print(yaml.dump(config))
@@ -168,6 +178,41 @@ def loadYamlCommandsIn(aCommandDir, theCli) :
           print(yaml.dump(yamlCmd))
           print("--------------------------------------------------------")
 
+#async def cpcliNatsClientError(err) :
+#  """cpcliNatsClientError is called whenever there is a general error
+#  associated with the NATS client or its connection to the NATS message
+#  system."""
+#
+#  print("Error: {err}".format(err=err))
+
+#async def cpcliNatsClientClosedConn() :
+#  """cpcliNatsClientClosedConn is called whenever the NATS client closes its
+#  connection to the NATS message system."""
+#  print("")
+#  print("connection to NATS server is now closed.")
+
+#async def cpcliNatsClientReconnected() :
+#  """cpcliNatsClientRecconnected is called whenever the NATS client reconnects
+#  to the NATS message system."""
+#
+#  print("reconnected to NATS server.")
+
+class SignalException(Exception):
+  """Deal with (Unix system) signal exceptions."""
+
+  def __init__(self, message):
+    super(SignalException, self).__init__(message)
+
+def signalHandler(signum, frame) :
+  """Handle Unix system signals by raising a SingnalException. """
+
+  msg = "SignalHandler: Caught signal {}".format(signum)
+  print(msg)
+  raise SignalException(msg)
+
+signal.signal(signal.SIGTERM, signalHandler)
+signal.signal(signal.SIGHUP, signalHandler)
+
 def runCommandWithNatsServer(data, commandMethod) :
   if callable(commandMethod)                      :
     if asyncio.iscoroutinefunction(commandMethod) :
@@ -186,7 +231,17 @@ def runCommandWithNatsServer(data, commandMethod) :
           await commandMethod(data, config, natsClient)
         finally:
           await natsClient.closeConnection()
-      asyncio.run(runCommand())
+      try :
+        asyncio.run(runCommand())
+      except SignalException as err :
+        print("")
+        print("Shutting down: {}".format(str(err)))
+      except KeyboardInterrupt as err :
+        print("")
+        print("Shutting down from KeyboardInterrupt: {}".format(str(err)))
+      except Exception as err :
+        msg = "\n ".join(traceback.format_exc().split("\n"))
+        print("Shutting down after exception: \n {}".format(msg))
     else : print("command MUST be an asyncio coroutine")
   else : print("command MUST be an asyncio coroutine")
 

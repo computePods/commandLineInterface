@@ -1,13 +1,15 @@
 # This file contains the projects command which interacts with the
 # MajorDomo's projects interface.
 
+import asyncio
 import click
 import os
 import platform
 import yaml
 
 import cputils.yamlLoader
-from cpcli.utils import getDataFromMajorDomo, postDataToMajorDomo
+from cpcli.utils import runCommandWithNatsServer, \
+  getDataFromMajorDomo, postDataToMajorDomo
 
 @click.group(
   short_help="Manage MajorDomo projects.",
@@ -188,3 +190,40 @@ def build(ctx, projectname, target) :
   print("")
   print(yaml.dump(data))
   print("")
+
+async def echoNatsMessages(aSubject, theSubject, theMsg) :
+  if isinstance(theMsg, str) and theMsg[1] != 'D' :
+    print(theMsg.strip("\""))
+  elif isinstance(theMsg, dict) :
+    if 'retCode' in theMsg :
+      print(f"completed with code: {theMsg['retCode']}")
+      print("\n--------------------------------------------------------------------------------\n")
+
+async def monitorBuild(data, config, natsClient) :
+  projectName = data['projectName']
+  target      = data['target']
+
+  await natsClient.listenToSubject(
+    f"logger.{projectName}.{target}", echoNatsMessages
+  )
+  await natsClient.listenToSubject(
+    f"*.build.from.*.{projectName}.{target}", echoNatsMessages
+  )
+
+  waitIndefinitely = asyncio.Event()
+  await waitIndefinitely.wait()
+
+@projects.command(
+    short_help="monitor the build of a target of an existing project.",
+    help="Monitor the build of a target of an existing project"
+)
+@click.argument('projectName')
+@click.argument('target')
+@click.pass_context
+def monitor(ctx, projectname, target) :
+  print(f"Monitoriing the building of... ({projectname}, {target})")
+  runCommandWithNatsServer(
+    { 'projectName' : projectname, 'target' : target},
+    monitorBuild
+  )
+  print("Done!")
