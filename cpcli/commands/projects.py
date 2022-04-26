@@ -11,6 +11,16 @@ import cputils.yamlLoader
 from cpcli.utils import runCommandWithNatsServer, \
   getDataFromMajorDomo, postDataToMajorDomo
 
+def fixUpProjDir(configData, yamlPath, newYamlData) :
+  if 'projects' not in newYamlData : return
+  for projName, projDesc in newYamlData['projects'].items() :
+    if 'targets' not in projDesc : continue
+    targets = projDesc['targets']
+    if 'defaults' not in targets: targets['defaults'] = {}
+    defaults = targets['defaults']
+    if 'projectDir' not in defaults :
+      defaults['projectDir'] = str(yamlPath.parent)
+
 @click.group(
   short_help="Manage MajorDomo projects.",
   help="Manage MajorDomo projects."
@@ -57,7 +67,7 @@ def add(ctx, projectnames, projectdir) :
 
   projects = {}
   cputils.yamlLoader.loadYamlFrom(
-    projects, projectdir, [ '.PYML'],
+    projects, projectdir, [ '.PYML'], fixUpProjDir
   )
 
   projectsFound = False
@@ -94,7 +104,7 @@ def update(ctx, projectname) :
 
   projects = {}
   cputils.yamlLoader.loadYamlFrom(
-    projects, aProjectDir, [ '.PYML'],
+    projects, aProjectDir, [ '.PYML'], fixUpProjDir
   )
 
   projectsFound = False
@@ -129,7 +139,7 @@ def remove(ctx, projectname) :
 
   projects = {}
   cputils.yamlLoader.loadYamlFrom(
-    projects, aProjectDir, [ '.PYML'],
+    projects, aProjectDir, [ '.PYML'], fixUpProjDir
   )
 
   projectsFound = False
