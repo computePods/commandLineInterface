@@ -58,8 +58,14 @@ def ctl() :
   parser.add_argument("-l", "--log", type=str,
     help=f"a path to the cprsync's log file [default: {defaultLogPath}]"
   )
-  parser.add_argument("-d", "--dir", type=str,
-    help="a path to the base directory into/from which rsync is allowed [no default]"
+  parser.add_argument("-c", "--consult", action='store_true', default=False,
+    help=f"whether or not to consult the local MajorDomo [default: False]"
+  )
+  parser.add_argument("-r", "--restricteddir", type=str,
+    help="a directory into/from which all rsync is restricted [no default]"
+  )
+  parser.add_argument("-a", "--alloweddir", action='append',
+    help="an additional allowed directory"
   )
   args = parser.parse_args()
 
@@ -93,31 +99,45 @@ def ctl() :
   cmdParts.append(targetDir)
   cmdParts[0] = '/usr/bin/rsync'
 
+  # Fail if this is NOT a path inside the restricted path
+  # (fail fast)
+  #
+  rsyncOK = True
+  if args.restricteddir :
+    if not targetDir.startswith(args.restricteddir) :
+      rsyncOK = False
+
   # Get the allowed project paths from this user's MajorDomo
   #
   projects = { }
-  if args.dir :
-    majorDomoOK = args.dir
-    projects['allowedDir'] = os.path.abspath(
-      os.path.expanduser(args.dir)
-    )
-  else :
-    majorDomoOK = socketPath
-    try :
-      http = HTTPUnixDomainConnection(socketPath)
-      http.request('GET', '/projects')
-      result = http.getresponse()
-      projects = json.loads(result.read())
-    except Exception as err :
-      majorDomoOK = repr(err)
+  if rsyncOK :
+    majorDomoOK = 'not consulted'
+    if args.consult :
+      majorDomoOK = socketPath
+      try :
+        http = HTTPUnixDomainConnection(socketPath)
+        http.request('GET', '/projects')
+        result = http.getresponse()
+        projects = json.loads(result.read())
+      except Exception as err :
+        majorDomoOK = repr(err)
+
+  # Add in any allowed directories from the command line
+  #
+  if rsyncOK and args.alloweddir:
+    pathNum = 1
+    for aDir in args.alloweddir :
+      projects[str(pathNum)] = os.path.abspath(os.path.expanduser(aDir))
+      pathNum = pathNum + 1
 
   # Check if this targetDir is an allowed project path
   #
-  rsyncOK = False
-  for anOkPath in projects.values() :
-    if targetDir.startswith(anOkPath) :
-      rsyncOK = True
-      break
+  if rsyncOK :
+    rsyncOK = False
+    for anOkPath in projects.values() :
+      if targetDir.startswith(anOkPath) :
+        rsyncOK = True
+        break
 
   # Log this result
   #
