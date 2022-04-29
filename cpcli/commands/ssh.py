@@ -27,6 +27,15 @@ def registerCommands(theCli) :
 # user's authorized_keys file.
 
 async def asyncEnableKey(config) :
+  lConfig = config['config']
+  if 'ssh' not in lConfig :
+    lConfig['ssh'] = {}
+  sshConfig = lConfig['ssh']
+  if 'cprsyncAllowedDirs' not in sshConfig :
+    sshConfig['cprsyncAllowedDirs'] = []
+  if 'logFileDir' in lConfig :
+    sshConfig['cprsyncAllowedDirs'].append(lConfig['logFileDir'])
+
   rsync = RsyncFileTransporter(config)
   rsyncPublicKey = getDataFromMajorDomo('/security/rsyncPublicKey')
   if rsyncPublicKey == "unknown" :
